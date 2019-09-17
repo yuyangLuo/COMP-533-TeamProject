@@ -1,5 +1,4 @@
 # COMP-533-TeamProject
-===
 This is a Team project for COMP 533 of fall 19 at Rice University  
 
 Team member:  
