@@ -15,7 +15,7 @@ public class DataHelper {
 		connectURL=url;
 		try {
 			Class.forName("org.postgresql.Driver").getDeclaredConstructor().newInstance();
-			con=DriverManager.getConnection(connectURL, "vista20sun", "www.sun.com.cn");
+			con=DriverManager.getConnection(connectURL, "postgres", "pgsql123");
 			statement=con.createStatement();
 			statement.setQueryTimeout(20);
 		} catch (Exception e) {
@@ -23,10 +23,10 @@ public class DataHelper {
 			e.printStackTrace();
 		}
 	}
-	//private static String cntStr1 = "jdbc:postgresql://comp533-postgres.clear.rice.edu/dr32yl189_db";
-	private static String cntStr2 = "jdbc:postgresql://192.168.233.130/database";
+	private static String cntStr1 = "jdbc:postgresql://35.223.114.159/database";
+	//private static String cntStr2 = "jdbc:postgresql://192.168.233.130/database";
 	public DataHelper(){
-		this(cntStr2);
+		this(cntStr1);
 	}
 	
 	public ResultSet query(String query){
