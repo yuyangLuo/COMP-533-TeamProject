@@ -75,8 +75,6 @@ public class airline_main extends JFrame implements OnloginSuccess, OnRegSuccess
 
 	@Override
 	public void logined() {
-		// TODO 自动生成的方法存根
-		
 		user_panel.remove(panel);
 		panel= new UserPanel(this);
 		user_panel.add(panel, BorderLayout.CENTER);
@@ -90,7 +88,6 @@ public class airline_main extends JFrame implements OnloginSuccess, OnRegSuccess
 
 	@Override
 	public void reged() {
-		// TODO 自动生成的方法存根
 		user_panel.remove(panel);
 		panel= new UserPanel(this);
 		user_panel.add(panel, BorderLayout.CENTER);

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import javax.swing.JTextField;
+import javax.swing.ProgressMonitor;
 import javax.swing.SpinnerDateModel;
 import javax.swing.JButton;
 import javax.swing.JSpinner;
@@ -575,6 +576,7 @@ public class SearchPanel extends JPanel {
 		}
 		search_success(lines.size());
 		listener.OnResultCatch(lines);
+		
 	}
 	public Date getRetDate(){
 		return (Date)Return.getValue();

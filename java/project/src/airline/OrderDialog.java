@@ -112,7 +112,7 @@ public class OrderDialog extends JDialog implements OnTableUpdate{
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						// TODO 自动生成的方法存根
-						placeOrder(from, to, line1, line2, date1);
+						tryPlaceOrder(from, to, line1, line2, date1);
 					}
 				});
 			}
@@ -178,36 +178,42 @@ public class OrderDialog extends JDialog implements OnTableUpdate{
 				JOptionPane.INFORMATION_MESSAGE,
 				null,options,options[0]);
 	}
-	private void placeOrder(String from, String to,ArrayList<Schedule> list1,ArrayList<Schedule>list2,String date){
+	private void tryPlaceOrder(String from, String to,ArrayList<Schedule> list1,ArrayList<Schedule>list2,String date) {
 		if(comboBox.getSelectedIndex()<0){
 			book_filed("please select a payment method");
 			return;
 		}
+		helper.startTransection();
+		boolean res = placeOrder(from, to, list1, list2, date);
+		helper.endTransection(!res);
+		if(res) {
+			book_success();
+			OrderDialog.this.dispose();
+			listener.onOrderSubmit();
+		}else {
+			book_filed("can not place your order");
+		}	
+	}
+	private boolean placeOrder(String from, String to,ArrayList<Schedule> list1,ArrayList<Schedule>list2,String date){
 		try{
-			if(!helper.insertBooking(price, userInfo.getUid(),((CreditCard)comboBox.getSelectedItem()).getCardNumber(), from, to, list.size(), list2!=null, date)){
-				book_filed("can not place your order");
-				return;
-			}
+			int bid = helper.insertBooking(price, userInfo.getUid(),((CreditCard)comboBox.getSelectedItem()).getCardNumber(), from, to, list.size(), list2!=null, date);
+			if(bid<0)
+				return false;
 			for(Schedule x:list1){
-				
-				if(!helper.insertBookingSchedule(x, false))
+				if(!helper.insertBookingSchedule(bid,x, false))
 					throw new Exception("order failed");
 			}
 			if(list2!=null){
 				for(Schedule x:list2){
-					if(!helper.insertBookingSchedule(x, true))
+					if(!helper.insertBookingSchedule(bid,x, true))
 						throw new Exception("order failed");
 				}
 			}
-			book_success();
-			OrderDialog.this.dispose();
-			listener.onOrderSubmit();
-			return;
+			return true;
 		}catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
-			book_filed("can not place your order");
-			return;
+			return false;
 		}
 	}
 	

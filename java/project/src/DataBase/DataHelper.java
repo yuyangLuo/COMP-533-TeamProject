@@ -51,6 +51,14 @@ public class DataHelper {
 		}
 	}
 	
+	public void startTransection() {
+		execute("BEGIN;");
+		execute("SET default_transaction_isolation='repeatable read';");
+	}
+	public void endTransection(boolean rollBack) {
+		execute(rollBack?"ROLLBACK":"COMMIT");
+	}
+	
 	public void close(){
 		try {
 			statement.close();
@@ -78,7 +86,20 @@ public class DataHelper {
 		}
 	}
 	public boolean register (LoginInfo login,UserInfo user){
-		return execute(Querys.register(user, login));
+		//return execute(Querys.register(user, login));
+		try{
+			ResultSet result=query(Querys.register(user, login));
+			while (result.next()){
+				boolean success = result.getBoolean(1);
+				result.close();
+				return success;
+			}
+			result.close();
+			return false;
+		}catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 	public boolean updateUserInfo(UserInfo info){
 		return execute(Querys.updateUinfo(info));
@@ -107,15 +128,41 @@ public class DataHelper {
 	public boolean deleteBooking(int uid, int onum){
 		return execute(Querys.deleteBooking(uid, onum));
 	}
-	public boolean insertBooking(float price,int uid,String cardNumber,String fromAP,String toAp,int fnum,boolean ret,String date){
-		return execute(Querys.insertbooking(price,uid,cardNumber,fromAP,toAp,fnum,ret,date));
+	public int insertBooking(float price,int uid,String cardNumber,String fromAP,String toAp,int fnum,boolean ret,String date){
+		//return execute(Querys.insertbooking(price,uid,cardNumber,fromAP,toAp,fnum,ret,date));
+		try{
+			ResultSet result=query(Querys.insertbooking(price,uid,cardNumber,fromAP,toAp,fnum,ret,date));
+			while (result.next()){
+				int bid = result.getInt(1);
+				result.close();
+				return bid;
+			}
+			result.close();
+			return -1;
+		}catch (Exception e) {
+			e.printStackTrace();
+			return -1;
+		}
 	}
 	public boolean deleteBookingSchedule(int oid){
 		return execute(Querys.deleteBookingSchedule(oid));
 	}
 	
-	public boolean insertBookingSchedule(Schedule schedule,boolean isret){
-		return execute(Querys.insertBookingSchedule(schedule, isret));
+	public boolean insertBookingSchedule(int bid,Schedule schedule,boolean isret){
+		//return execute(Querys.insertBookingSchedule(schedule, isret));
+		try{
+			ResultSet result=query(Querys.insertBookingSchedule(bid,schedule, isret));
+			while (result.next()){
+				boolean success = result.getBoolean(1);
+				result.close();
+				return success;
+			}
+			result.close();
+			return false;
+		}catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 	
 	public UserInfo getUserInfo(LoginInfo loginInfo){

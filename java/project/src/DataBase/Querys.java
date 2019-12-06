@@ -9,10 +9,8 @@ public class Querys {
 	protected static String checkUser(String email){
 		return String.format(CheckUser, email);
 	}
-	
-	protected final static String Register = 
-			"INSERT INTO customer VALUES(DEFAULT,'%S',%S,'%S',DEFAULT);\n"+
-			"INSERT INTO login_info VALUES('%s','%s',(SELECT currval(pg_get_serial_sequence('customer', 'user_id'))))";
+	protected final static String Register = "SELECT register('%S',%S,'%S','%s','%s');";
+
 	protected static String register(UserInfo user, LoginInfo login){
 		return String.format(Register, user.getFirstName(),user.getMiddleName()==null?"NULL":String.format("'%s'", user.getMiddleName()),user.getLastName(),login.getUserName(),login.getPassWord());
 	}
@@ -109,7 +107,7 @@ public class Querys {
 		return String.format(DeleteBooking, uid,onum);
 	}
 	protected final static String InsertBooking = 
-			"INSERT INTO booking VALUES(DEFAULT, %f,%d,'%s','%s','%s',%d,'%d','%s');";
+			"SELECT INSERTBOOKING(%f,%d,'%s','%s','%s',%d,'%d','%s');";
 	protected static String insertbooking (float price,int uid,String cardNumber,String fromAP,String toAp,int fnum,boolean ret,String date){
 		return String.format(InsertBooking, price,uid,cardNumber,fromAP,toAp,fnum,ret?1:0,date);
 	}
@@ -126,9 +124,9 @@ public class Querys {
 	}
 	
 	protected final static String InsertBookingSchedule=
-			"INSERT INTO booking_schedule VALUES(currval(pg_get_serial_sequence('booking', 'order_num')),'%s',%d,'%s','%d','%d',%d)";
-	protected final static String insertBookingSchedule(Schedule schedule,boolean isret){
-		return String.format(InsertBookingSchedule, schedule.getAcode(),schedule.getFlightNumber(),schedule.getSchedule_date(),isret?1:0,schedule.isBookfirstclass()?1:0,schedule.getFlight_id());
+			"SELECT INSERTBKSCH(%d,'%s',%d,'%s','%d','%d',%d);";
+	protected final static String insertBookingSchedule(int bid,Schedule schedule,boolean isret){
+		return String.format(InsertBookingSchedule, bid,schedule.getAcode(),schedule.getFlightNumber(),schedule.getSchedule_date(),isret?1:0,schedule.isBookfirstclass()?1:0,schedule.getFlight_id());
 	}
 	
 	
@@ -175,10 +173,10 @@ public class Querys {
 		return String.format(AirPortName, iata);
 	}
 	
-	protected final static String AirPorts = "SELECT iata FROM airports WHERE iata  <> 'UDF'";
+	protected final static String AirPorts = "SELECT iata FROM airports WHERE iata IS NOT NULL";
 	
 	protected final static String Countries = 
-			"SELECT DISTINCT country FROM airports WHERE iata <>'UDF' ORDER BY country";
+			"SELECT DISTINCT country FROM airports WHERE iata IS NOT NULL ORDER BY country";
 	protected final static String CountryAirport = 
 			"SELECT DISTINCT iata FROM airports WHERE country = '%s'";
 	protected final static String CountryAirports = 
@@ -207,97 +205,3 @@ public class Querys {
 	
 	
 }
-
-/*
- "WITH RECURSIVE flight_line AS(\n"+
-					"WITH fs AS(\n"+
-							"WITH sd AS(\n"+
-				            "SELECT acode, flight_number, schedule_date,count(*) AS sold\n"+
-				            "FROM booking_schedule\n"+
-				            "GROUP BY(acode, flight_number, schedule_date)\n"+
-				        ")\n"+
-				        "SELECT flight.acode,flight.flight_number,from_airport,to_airport,mileage,schedule.schedule_date,from_time,to_time,firstclasscapacity,econclasscapacity,\n"+
-				        "firstclassprice,econclassprice,passdate, sold\n"+
-				        "FROM (flight NATURAL JOIN schedule) LEFT OUTER JOIN sd ON flight.acode=sd.acode AND flight.flight_number=sd.flight_number AND schedule.schedule_date=sd.schedule_date\n"+
-				        "        WHERE (sold is NULL or sold< firstclasscapacity+econclasscapacity)"+
-					")\n"+
-					"SELECT \n"+ 
-						"from_airport,\n"+
-						"to_airport,\n"+
-						"schedule_date+from_time AS from_date,\n"+
-						"schedule_date+CASE passdate WHEN TRUE THEN 1 ELSE 0 END+to_time AS to_date,\n"+
-						"schedule_date::text AS fly_date,\n"+
-				        "from_time::TEXT fly_time,\n"+
-				        "(schedule_date+CASE passdate WHEN TRUE THEN 1 ELSE 0 END)::TEXT AS arrive_date,\n"+
-				        "to_time::TEXT arrive_time,\n"+
-						"1 flight_count,\n"+
-						"from_airport||'->'||to_airport AS line,\n"+
-						"acode||' '||flight_number AS flights,\n"+
-						"econclassprice AS price \n"+
-					"FROM fs \n"+
-					"WHERE \n"+
-						"from_airport = '%s'\n"+											//from
-						"AND (schedule_date = '%s' OR NOT %b)\n"+
-					"UNION\n"+ 
-					"SELECT\n"+ 
-						"flight_line.from_airport,\n"+
-						"ext.to_airport,\n"+
-						"from_date,\n"+
-						"ext.schedule_date+CASE ext.passdate WHEN TRUE THEN 1 ELSE 0 END+ext.to_time AS to_date,\n"+
-						"fly_date||'->'||schedule_date AS fly_date,\n"+
-						"fly_time,\n"+
-				        "(ext.schedule_date+CASE ext.passdate WHEN TRUE THEN 1 ELSE 0 END)::TEXT AS arrive_date,\n"+
-				        "ext.to_time::TEXT arrive_time,\n"+
-						"flight_count+1 AS flight_count,\n"+
-						"line||'->'||ext.to_airport AS line,\n"+
-						"flights||'->'||ext.acode||' '||flight_number,\n"+
-						"price + econclassprice AS price\n"+
-					"FROM flight_line, fs ext\n"+
-					"WHERE\n"+
-						"flight_line.to_airport = ext.from_airport\n"+
-						"AND flight_line.flight_count<%d\n"+									//max trans
-						"AND flight_line.to_airport<>'%s'\n"+								//to
-						"AND to_date < (ext.schedule_date+ext.from_time)-INTERVAL '%s'\n"+ 	//timeslice low
-						"AND to_date > (ext.schedule_date+ext.from_time)-INTERVAL '%s'\n"+ 	//timeslice up
-			")\n"+
-			"SELECT *,(to_date-from_date)::TEXT AS length  FROM  flight_line\n"+
-			"WHERE\n"+ 
-				"flight_line.to_airport='%s'\n"+												//to
-				"AND ((to_date-from_date) < INTERVAL '%s' OR NOT %b)\n"+							//total time ; use total time
-				"AND (price<=%f OR NOT %b)\n%s";													//total price ; use total price
-				
-				
-				
-				
-				
-				
-			"WITH fs AS(\n"+
-				"WITH sd1 AS(\n"+
-					"SELECT acode, flight_number, schedule_date,count(*) AS soldE\n"+
-					"FROM booking_schedule\n"+
-					"WHERE isfirstclass='0'\n"+
-					"GROUP BY(acode, flight_number, schedule_date)\n"+
-				"),sd2 AS(\n"+
-					"SELECT acode, flight_number, schedule_date,count(*) AS soldF\n"+
-					"FROM booking_schedule\n"+
-					"WHERE isfirstclass='1'\n"+
-					"GROUP BY(acode, flight_number, schedule_date)\n"+
-				")\n"+
-			"SELECT flight.acode,flight.flight_number,from_airport,to_airport,mileage,schedule.schedule_date,from_time,to_time,firstclasscapacity,econclasscapacity,firstclassprice,econclassprice,passdate, soldE,soldF,airline_name, flight.flight_id\n"+
-			"FROM\n"+ 
-				"(flight Natural JOIN schedule NATURAL JOIN air_line)" +
-		        "LEFT OUTER JOIN sd1\n"+
-		        "ON\n"+ 
-		        	"flight.acode=sd1.acode AND\n"+
-		        	"flight.flight_number=sd1.flight_number AND\n"+
-		        	"schedule.schedule_date=sd1.schedule_date\n"+
-		        "LEFT OUTER JOIN sd2\n"+
-		        "ON\n"+ 
-		        	"flight.acode=sd2.acode AND\n"+
-		        	"flight.flight_number=sd2.flight_number AND\n"+
-		        	"schedule.schedule_date=sd2.schedule_date\n"+
-		   ")\n"+
-		   "SELECT * FROM fs\n"+
-		   "WHERE\n"+ 
-		   "acode='%s' AND flight_number=%d AND schedule_date = '%s'";
-*/

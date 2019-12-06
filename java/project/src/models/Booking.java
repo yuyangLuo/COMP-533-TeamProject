@@ -79,7 +79,6 @@ public class Booking {
 		try{
 			return  "****"+getCardNumber().substring(getCardNumber().length()-4);
 		}catch (Exception e) {
-			// TODO: handle exception
 			return "****";
 		}
 	}
