@@ -1,0 +1,42 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug (Launch) - Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-LoginDialog<project>",
+            "request": "launch",
+            "mainClass": "airline.LoginDialog",
+            "projectName": "project"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-RegDialog<project>",
+            "request": "launch",
+            "mainClass": "airline.RegDialog",
+            "projectName": "project"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-airline_main<project>",
+            "request": "launch",
+            "mainClass": "airline.airline_main",
+            "projectName": "project"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-PGJDBCMain<project>",
+            "request": "launch",
+            "mainClass": "org.postgresql.util.PGJDBCMain",
+            "projectName": "project"
+        }
+    ]
+}
